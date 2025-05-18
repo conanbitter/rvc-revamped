@@ -1,4 +1,4 @@
-use std::{cmp::min, io::stdout, thread::sleep, time::Duration};
+use std::{cmp::min, fmt::Display, io::stdout, thread::sleep, time::Duration};
 
 use crossterm::{
     cursor::{Hide, MoveToColumn, MoveUp, Show},
@@ -7,8 +7,52 @@ use crossterm::{
     terminal::{self, Clear, ClearType},
 };
 
+struct ProgressBar {
+    total: u64,
+    current: u64,
+    totalf: f64,
+}
+
+impl ProgressBar {
+    const MAX_WIDTH: u16 = 40;
+
+    fn new(size: u64) -> ProgressBar {
+        ProgressBar {
+            total: size,
+            totalf: size as f64,
+            current: 0,
+        }
+    }
+
+    fn step(&mut self, size: u64) {
+        self.current = min(self.current + size, self.total - 1);
+    }
+
+    fn finish(&mut self) {
+        self.current = self.total - 1;
+    }
+}
+
+impl Display for ProgressBar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (term_width, _) = terminal::size().unwrap(); // TODO convert error
+        let width = min(term_width, ProgressBar::MAX_WIDTH);
+        let progress = (self.current as f64) / self.totalf;
+        let left = ((width as f64) * progress).round() as u16;
+        let right = width - left;
+        write!(
+            f,
+            "[{}{}] {:3}%",
+            "#".repeat(left as usize),
+            "-".repeat(right as usize),
+            (progress * 100.0).round()
+        )
+    }
+}
+
 fn main() -> std::io::Result<()> {
-    let mut progress = 0.0;
+    let mut pb = ProgressBar::new(1000);
+    let mut progress = 0;
     execute!(
         stdout(),
         Hide,
@@ -24,17 +68,6 @@ fn main() -> std::io::Result<()> {
         Print("Time remaining: \n\n"),
     )?;
     loop {
-        let (term_width, _) = terminal::size()?;
-        let pb_width = min(term_width, 40);
-        let pb_left = ((pb_width as f64) * progress).round() as usize;
-        let pb_right = pb_width as usize - pb_left;
-        let pb_line = format!(
-            "[{}{}] {:3}%",
-            "#".repeat(pb_left),
-            "-".repeat(pb_right),
-            (progress * 100.0).round()
-        );
-        let steps = (1000.0 * (1.0 - progress)) as i32;
         execute!(
             stdout(),
             MoveUp(9),
@@ -48,7 +81,7 @@ fn main() -> std::io::Result<()> {
             SetForegroundColor(crossterm::style::Color::Grey),
             Print("          Step: "),
             SetForegroundColor(crossterm::style::Color::Yellow),
-            Print(format!("{}/1000    \n\n", steps)),
+            Print(format!("{}/1000    \n\n", progress)),
             SetForegroundColor(crossterm::style::Color::Grey),
             Clear(ClearType::CurrentLine),
             Print("  Points moved: "),
@@ -71,15 +104,17 @@ fn main() -> std::io::Result<()> {
             Print("32:64:42\n\n"),
             SetForegroundColor(crossterm::style::Color::Grey),
             Clear(ClearType::CurrentLine),
-            Print(pb_line),
+            Print(&pb),
             ResetColor
         )?;
         sleep(Duration::from_millis(100));
-        progress += 0.003;
-        if progress > 1.0 {
+        progress += 3;
+        pb.step(3);
+        if progress > 1000 {
             break;
         }
     }
+    pb.finish();
     execute!(stdout(), Show, ResetColor)?;
     Ok(())
 }
