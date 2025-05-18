@@ -2,6 +2,7 @@ use anyhow::Result;
 use interface::{StatusCalculating, Tui};
 use std::{thread::sleep, time::Duration};
 
+mod colorcalc;
 mod interface;
 
 fn main() -> Result<()> {

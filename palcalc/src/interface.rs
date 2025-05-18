@@ -8,6 +8,7 @@ use std::{
     cmp::min,
     fmt::Display,
     io::{Stdout, stdout},
+    path::PathBuf,
     time::{Duration, Instant},
 };
 
@@ -207,6 +208,73 @@ impl StatusCalculating {
             style::Print("Total distance: "),
             style::SetForegroundColor(crossterm::style::Color::Yellow),
             style::Print(format!("{:.4}\n\n", distance)),
+            style::SetForegroundColor(crossterm::style::Color::Grey),
+            terminal::Clear(terminal::ClearType::CurrentLine),
+            style::Print("  Time elapsed: "),
+            style::SetForegroundColor(crossterm::style::Color::Yellow),
+            style::Print(self.timer.get_elapsed()),
+            style::Print("\n"),
+            style::SetForegroundColor(crossterm::style::Color::Grey),
+            terminal::Clear(terminal::ClearType::CurrentLine),
+            style::Print("Time remaining: "),
+            style::SetForegroundColor(crossterm::style::Color::Yellow),
+            style::Print(self.timer.get_remaining()),
+            style::Print("\n\n"),
+            style::SetForegroundColor(crossterm::style::Color::Grey),
+            terminal::Clear(terminal::ClearType::CurrentLine),
+            style::Print(&self.pbar),
+        )?;
+        Ok(())
+    }
+}
+
+pub struct StatusLoading {
+    pbar: ProgressBar,
+    pub timer: Timer,
+    total_files: u32,
+}
+
+impl StatusLoading {
+    pub fn new(tui: &mut Tui, total_files: u32) -> Result<StatusLoading> {
+        execute!(
+            tui.out,
+            style::SetForegroundColor(crossterm::style::Color::Grey),
+            style::Print("* Loading images...\n\n"),
+            style::Print("          File: \n\n"),
+            style::Print("  Time elapsed: \n"),
+            style::Print("Time remaining: \n\n"),
+        )?;
+        Ok(StatusLoading {
+            pbar: ProgressBar::new(total_files, tui.width),
+            timer: Timer::new(total_files),
+            total_files,
+        })
+    }
+
+    pub fn update(&mut self, tui: &mut Tui, filename: PathBuf, progress: u32) -> Result<()> {
+        self.timer.update(progress);
+        self.pbar.current = progress;
+
+        let name = match filename.file_name() {
+            Some(flnm) => flnm.to_str().unwrap_or(""),
+            None => "",
+        };
+        let name = if name.len() as u16 + 17 > tui.width {
+            &name[..(tui.width - 18) as usize]
+        } else {
+            name
+        };
+
+        execute!(
+            tui.out,
+            cursor::MoveUp(5),
+            cursor::MoveToColumn(0),
+            style::SetForegroundColor(crossterm::style::Color::Grey),
+            terminal::Clear(terminal::ClearType::CurrentLine),
+            style::Print("          File: "),
+            style::SetForegroundColor(crossterm::style::Color::Yellow),
+            style::Print(name),
+            style::Print("\n\n"),
             style::SetForegroundColor(crossterm::style::Color::Grey),
             terminal::Clear(terminal::ClearType::CurrentLine),
             style::Print("  Time elapsed: "),
