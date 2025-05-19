@@ -1,3 +1,4 @@
+mod bluenoise;
 mod pattern;
 
 fn main() {
