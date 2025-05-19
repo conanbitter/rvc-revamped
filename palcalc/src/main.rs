@@ -8,11 +8,14 @@ use std::path::PathBuf;
 mod colorcalc;
 mod colors;
 mod interface;
+mod palette;
 
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(required = true)]
     files: Vec<PathBuf>,
+    #[arg(short, long)]
+    output: String,
     #[arg(short, long, default_value_t = 256)]
     colors: u32,
     #[arg(short, long, default_value_t = 5)]
@@ -41,8 +44,9 @@ fn main() -> Result<()> {
 
     tui.separator()?;
 
-    let mut calculator = ColorCalc::new(255, color_data, &mut tui, args.attempts, args.steps)?;
-    calculator.run(&mut tui)?;
+    let mut calculator = ColorCalc::new(args.colors, color_data, &mut tui, args.attempts, args.steps)?;
+    let palette = calculator.run(&mut tui)?;
+    palette.save(args.output)?;
 
     Ok(())
 }

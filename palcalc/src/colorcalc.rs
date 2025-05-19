@@ -6,8 +6,9 @@ use rand::Rng;
 use rayon::prelude::*;
 
 use crate::{
-    colors::FloatColor,
+    colors::{FloatColor, IntColor},
     interface::{StatusCalculating, Tui},
+    palette::Palette,
 };
 
 pub struct ColorData(Vec<Vec<Vec<u64>>>);
@@ -47,7 +48,7 @@ pub struct ColorCalc {
     points: Vec<ColorPoint>,
     centroids: Vec<FloatColor>,
 
-    colors: i32,
+    colors: u32,
     point_count: u64,
 
     total_distance: f64,
@@ -56,11 +57,14 @@ pub struct ColorCalc {
     status: StatusCalculating,
     max_attempts: u32,
     max_steps: u32,
+
+    best_error: f64,
+    best_palette: Palette,
 }
 
 impl ColorCalc {
     pub fn new(
-        color_count: i32,
+        color_count: u32,
         colors: ColorData,
         tui: &mut Tui,
         max_attempts: u32,
@@ -108,6 +112,8 @@ impl ColorCalc {
             max_attempts,
             max_steps,
             status: StatusCalculating::new(tui, max_attempts, max_steps, total_colors as u32)?,
+            best_error: 0.0,
+            best_palette: Palette::new(),
         })
     }
 
@@ -212,7 +218,23 @@ impl ColorCalc {
         Ok(())
     }
 
-    pub fn run(&mut self, tui: &mut Tui) -> Result<()> {
+    fn calc_error(&self) -> f64 {
+        let mut score = 0.0;
+        for point in &self.points {
+            score += (point.color.distance(self.centroids[point.segment as usize]) * (point.count as f64)).sqrt();
+        }
+        score
+    }
+
+    fn generate_palette(&self) -> Palette {
+        let mut result = Palette::new();
+        for cent in &self.centroids {
+            result.add(IntColor::from(cent));
+        }
+        result
+    }
+
+    pub fn run(&mut self, tui: &mut Tui) -> Result<Palette> {
         let mut steps_passed = 0;
         for a in 0..self.max_attempts {
             self.init_centroids();
@@ -231,7 +253,15 @@ impl ColorCalc {
                     steps_passed += s;
                 }
             }
+            self.calc_segments();
+            let error = self.calc_error();
+            if a == 0 || error < self.best_error {
+                self.best_error = error;
+                self.best_palette = self.generate_palette();
+            }
         }
-        Ok(())
+
+        self.best_palette.sort();
+        Ok(self.best_palette.clone())
     }
 }

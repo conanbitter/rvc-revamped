@@ -1,1 +1,1 @@
-cargo run -p palcalc -r -- testdata\*.png
+cargo run -p palcalc -r -- -o testdata\test.pal testdata\*.png

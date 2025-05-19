@@ -252,7 +252,8 @@ impl StatusLoading {
             tui.out,
             style::SetForegroundColor(crossterm::style::Color::Grey),
             style::Print("* Loading images...\n\n"),
-            style::Print("          File: \n\n"),
+            style::Print("          File: \n"),
+            style::Print("          Name: \n\n"),
             style::Print("  Time elapsed: \n"),
             style::Print("Time remaining: \n\n"),
         )?;
@@ -279,11 +280,16 @@ impl StatusLoading {
 
         execute!(
             tui.out,
-            cursor::MoveUp(5),
+            cursor::MoveUp(6),
             cursor::MoveToColumn(0),
             style::SetForegroundColor(crossterm::style::Color::Grey),
             terminal::Clear(terminal::ClearType::CurrentLine),
             style::Print("          File: "),
+            style::SetForegroundColor(crossterm::style::Color::Yellow),
+            style::Print(format!("{}/{}\n", progress + 1, self.total_files)),
+            style::SetForegroundColor(crossterm::style::Color::Grey),
+            terminal::Clear(terminal::ClearType::CurrentLine),
+            style::Print("          Name: "),
             style::SetForegroundColor(crossterm::style::Color::Yellow),
             style::Print(name),
             style::Print("\n\n"),
