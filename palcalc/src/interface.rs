@@ -8,7 +8,7 @@ use std::{
     cmp::min,
     fmt::Display,
     io::{Stdout, stdout},
-    path::PathBuf,
+    path::Path,
     time::{Duration, Instant},
 };
 
@@ -30,6 +30,11 @@ impl Tui {
             style::SetForegroundColor(Color::White),
             style::Print("[RVC rev.]\nPalette Calculator\n\n"),
         )?;
+        Ok(())
+    }
+
+    pub fn separator(&mut self) -> Result<()> {
+        execute!(self.out, style::Print("\n\n"),)?;
         Ok(())
     }
 }
@@ -68,7 +73,7 @@ impl ProgressBar {
 
 impl Display for ProgressBar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let progress = (self.current as f64) / self.total as f64;
+        let progress = ((self.current + 1) as f64) / self.total as f64;
         let left = ((self.width as f64) * progress).round() as u16;
         let right = self.width - left;
         write!(
@@ -251,7 +256,7 @@ impl StatusLoading {
         })
     }
 
-    pub fn update(&mut self, tui: &mut Tui, filename: PathBuf, progress: u32) -> Result<()> {
+    pub fn update(&mut self, tui: &mut Tui, filename: &Path, progress: u32) -> Result<()> {
         self.timer.update(progress);
         self.pbar.current = progress;
 
