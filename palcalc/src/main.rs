@@ -29,8 +29,10 @@ fn main() -> Result<()> {
     for (progress, filename) in args.files.iter().enumerate() {
         let img = ImageReader::open(filename)?.decode()?.to_rgb8();
         color_data.add(&img);
-        loading_status.update(&mut tui, filename, progress as u32)?;
-        //sleep(Duration::from_millis(500));
+        if loading_status.timer.needs_update() || progress == 0 || progress == args.files.len() - 1 {
+            loading_status.update(&mut tui, filename, progress as u32)?;
+        };
+        //sleep(Duration::from_millis(300));
     }
 
     tui.separator()?;

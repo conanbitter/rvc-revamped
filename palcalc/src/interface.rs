@@ -107,6 +107,8 @@ fn duration_format(duration: Duration) -> String {
 }
 
 impl Timer {
+    const MIN_DURATION: Duration = Duration::from_millis(500);
+
     pub fn new(total: u32) -> Timer {
         Timer {
             step: 0,
@@ -122,7 +124,7 @@ impl Timer {
     }
 
     pub fn needs_update(&self) -> bool {
-        self.last_update.elapsed() > Duration::from_millis(500)
+        self.last_update.elapsed() > Timer::MIN_DURATION
     }
 
     pub fn update(&mut self, step: u32) {
