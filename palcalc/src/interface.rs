@@ -156,9 +156,13 @@ pub struct StatusCalculating {
 }
 
 impl StatusCalculating {
-    pub fn new(tui: &mut Tui, total_attempts: u32, total_steps: u32) -> Result<StatusCalculating> {
+    pub fn new(tui: &mut Tui, total_attempts: u32, total_steps: u32, total_colors: u32) -> Result<StatusCalculating> {
         execute!(
             tui.out,
+            style::SetForegroundColor(crossterm::style::Color::Grey),
+            style::Print("Number of colors: "),
+            style::SetForegroundColor(crossterm::style::Color::Yellow),
+            style::Print(format!("{}\n\n", total_colors)),
             style::SetForegroundColor(crossterm::style::Color::Grey),
             style::Print("* Calculating palette...\n\n"),
             style::Print("       Attempt: \n"),
@@ -199,12 +203,12 @@ impl StatusCalculating {
             terminal::Clear(terminal::ClearType::CurrentLine),
             style::Print("       Attempt: "),
             style::SetForegroundColor(crossterm::style::Color::Yellow),
-            style::Print(format!("{}/{}\n", attempt, self.total_attempts)),
+            style::Print(format!("{}/{}\n", attempt + 1, self.total_attempts)),
             terminal::Clear(terminal::ClearType::CurrentLine),
             style::SetForegroundColor(crossterm::style::Color::Grey),
             style::Print("          Step: "),
             style::SetForegroundColor(crossterm::style::Color::Yellow),
-            style::Print(format!("{}/{}\n\n", step, self.total_steps)),
+            style::Print(format!("{}/{}\n\n", step + 1, self.total_steps)),
             style::SetForegroundColor(crossterm::style::Color::Grey),
             terminal::Clear(terminal::ClearType::CurrentLine),
             style::Print("  Points moved: "),

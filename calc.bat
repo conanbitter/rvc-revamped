@@ -1,1 +1,1 @@
-cargo run -p palcalc -- -c 256 testdata\*.png
+cargo run -p palcalc -r -- -c 256 testdata\*.png

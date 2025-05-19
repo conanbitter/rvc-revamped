@@ -1,11 +1,12 @@
 use anyhow::Result;
 use clap::Parser;
-use colorcalc::ColorData;
+use colorcalc::{ColorCalc, ColorData};
 use image::ImageReader;
 use interface::{StatusCalculating, StatusLoading, Tui};
 use std::{path::PathBuf, thread::sleep, time::Duration};
 
 mod colorcalc;
+mod colors;
 mod interface;
 
 #[derive(Parser, Debug)]
@@ -37,19 +38,8 @@ fn main() -> Result<()> {
 
     tui.separator()?;
 
-    let mut status = StatusCalculating::new(&mut tui, 5, 1000)?;
-    let mut progress = 0;
-    status.timer.start();
-    status.update(&mut tui, 1, progress, 34, 0.5, progress, 1000)?;
-    loop {
-        if status.timer.needs_update() {
-            status.update(&mut tui, 1, progress, 34, 0.5, progress, 1000)?;
-        }
-        sleep(Duration::from_millis(100));
-        progress += 3;
-        if progress > 1000 {
-            break;
-        }
-    }
+    let mut calculator = ColorCalc::new(255, color_data, &mut tui)?;
+    calculator.run(&mut tui)?;
+
     Ok(())
 }
