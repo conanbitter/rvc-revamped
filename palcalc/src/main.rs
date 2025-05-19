@@ -2,8 +2,8 @@ use anyhow::Result;
 use clap::Parser;
 use colorcalc::{ColorCalc, ColorData};
 use image::ImageReader;
-use interface::{StatusCalculating, StatusLoading, Tui};
-use std::{path::PathBuf, thread::sleep, time::Duration};
+use interface::{StatusLoading, Tui};
+use std::path::PathBuf;
 
 mod colorcalc;
 mod colors;
@@ -13,8 +13,12 @@ mod interface;
 struct Args {
     #[arg(required = true)]
     files: Vec<PathBuf>,
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = 256)]
     colors: u32,
+    #[arg(short, long, default_value_t = 5)]
+    attempts: u32,
+    #[arg(short, long, default_value_t = 1000)]
+    steps: u32,
 }
 
 fn main() -> Result<()> {
@@ -33,12 +37,11 @@ fn main() -> Result<()> {
         if loading_status.timer.needs_update() || progress == 0 || progress == args.files.len() - 1 {
             loading_status.update(&mut tui, filename, progress as u32)?;
         };
-        //sleep(Duration::from_millis(300));
     }
 
     tui.separator()?;
 
-    let mut calculator = ColorCalc::new(255, color_data, &mut tui)?;
+    let mut calculator = ColorCalc::new(255, color_data, &mut tui, args.attempts, args.steps)?;
     calculator.run(&mut tui)?;
 
     Ok(())

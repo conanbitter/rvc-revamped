@@ -54,10 +54,18 @@ pub struct ColorCalc {
     points_changed: u64,
 
     status: StatusCalculating,
+    max_attempts: u32,
+    max_steps: u32,
 }
 
 impl ColorCalc {
-    pub fn new(color_count: i32, colors: ColorData, tui: &mut Tui) -> Result<ColorCalc> {
+    pub fn new(
+        color_count: i32,
+        colors: ColorData,
+        tui: &mut Tui,
+        max_attempts: u32,
+        max_steps: u32,
+    ) -> Result<ColorCalc> {
         let mut total_colors = {
             if color_count > 256 {
                 256u64
@@ -97,7 +105,9 @@ impl ColorCalc {
             point_count: unique_colors,
             total_distance: 0.0,
             points_changed: 0,
-            status: StatusCalculating::new(tui, 5, 1000, total_colors as u32)?,
+            max_attempts,
+            max_steps,
+            status: StatusCalculating::new(tui, max_attempts, max_steps, total_colors as u32)?,
         })
     }
 
@@ -179,34 +189,34 @@ impl ColorCalc {
         self.points_changed = *points_changed.lock().unwrap();
     }
 
-    fn update_stats(&mut self, tui: &mut Tui, attempt: usize, step: usize, passed: usize) -> Result<()> {
+    fn update_stats(&mut self, tui: &mut Tui, attempt: u32, step: u32, passed: u32) -> Result<()> {
         let step_current;
         let steps_total;
         if attempt == 0 {
             step_current = step;
-            steps_total = 5 * 1000;
+            steps_total = self.max_attempts * self.max_steps;
         } else {
             step_current = passed + step;
-            steps_total = passed + passed / attempt * (5 - attempt);
+            steps_total = passed + passed / attempt * (self.max_attempts - attempt);
         }
 
         self.status.update(
             tui,
-            attempt as u32,
-            step as u32,
+            attempt,
+            step,
             self.points_changed,
             self.total_distance * 100.0,
-            step_current as u32,
-            steps_total as u32,
+            step_current,
+            steps_total,
         )?;
         Ok(())
     }
 
     pub fn run(&mut self, tui: &mut Tui) -> Result<()> {
         let mut steps_passed = 0;
-        for a in 0..5 {
+        for a in 0..self.max_attempts {
             self.init_centroids();
-            for s in 0..1000 {
+            for s in 0..self.max_steps {
                 self.calc_segments();
                 if self.points_changed == 0 {
                     self.update_stats(tui, a, s, steps_passed)?;
@@ -214,8 +224,11 @@ impl ColorCalc {
                     break;
                 }
                 self.calc_centroids();
-                if self.status.timer.needs_update() || s == 1000 - 1 {
+                if self.status.timer.needs_update() || s == self.max_steps - 1 {
                     self.update_stats(tui, a, s, steps_passed)?;
+                }
+                if s == self.max_steps - 1 {
+                    steps_passed += s;
                 }
             }
         }

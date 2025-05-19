@@ -73,7 +73,7 @@ impl ProgressBar {
 
 impl Display for ProgressBar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let progress = ((self.current + 1) as f64) / self.total as f64;
+        let progress = (((self.current + 1) as f64) / self.total as f64).clamp(0.0, 1.0);
         let left = ((self.width as f64) * progress).round() as u16;
         let right = self.width - left;
         write!(
@@ -192,8 +192,9 @@ impl StatusCalculating {
     ) -> Result<()> {
         self.timer.total = adjusted_total;
         self.timer.update(progress);
-        self.pbar.total = adjusted_total;
-        self.pbar.current = progress;
+        //self.pbar.total = adjusted_total;
+        //self.pbar.current = progress;
+        self.pbar.current = step + attempt * self.total_steps;
 
         execute!(
             tui.out,
