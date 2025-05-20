@@ -1,4 +1,6 @@
+use anyhow::Result;
 use bincode::{Decode, Encode};
+use std::fs;
 
 #[derive(Decode, Encode)]
 pub struct Pattern {
@@ -20,5 +22,16 @@ impl Pattern {
 
     pub fn set(&mut self, x: u32, y: u32, level: u32) {
         self.data[(x + y * self.width) as usize] = level;
+    }
+
+    pub fn get(&mut self, x: u32, y: u32) -> u32 {
+        self.data[(x + y * self.width) as usize]
+    }
+
+    pub fn save(&self, filename: String) -> Result<()> {
+        let mut file = fs::File::create(filename)?;
+        let config = bincode::config::standard();
+        bincode::encode_into_std_write(self, &mut file, config)?;
+        Ok(())
     }
 }

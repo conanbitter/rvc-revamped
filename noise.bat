@@ -1,0 +1,1 @@
+cargo run -p noisegen -r -- -w 128 -h 128 -l 16 -p testdata\noise_preview.png testdata\noise128x128x16.pat
