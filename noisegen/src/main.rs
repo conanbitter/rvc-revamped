@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use anyhow::Result;
 use bluenoise::generate_points;
 use clap::{Args, Parser};
@@ -13,23 +15,30 @@ struct CliArgs {
     output: String,
     #[arg(long, action = clap::ArgAction::HelpLong)]
     help: Option<bool>,
-    #[arg(short, long)]
-    width: u32,
-    #[arg(short, long)]
-    height: u32,
     #[command(flatten)]
-    pat_type: PatternType,
+    bayer_params: Option<BayerParams>,
+    #[command(flatten)]
+    noise_params: Option<NoiseParams>,
     #[arg(short, long, required = false)]
     preview: Option<String>,
 }
 
 #[derive(Args, Debug)]
-#[group(required = true, multiple = false)]
-struct PatternType {
-    #[arg(short, long)]
-    levels: Option<u32>,
-    #[arg(short, long)]
-    bayer: bool,
+#[group(required = false, multiple = true, conflicts_with = "bayer")]
+struct NoiseParams {
+    #[arg(short, long, required = false)]
+    width: u32,
+    #[arg(short, long, required = false)]
+    height: u32,
+    #[arg(short, long, required = false)]
+    levels: u32,
+}
+
+#[derive(Args, Debug)]
+#[group(required = false, multiple = true)]
+struct BayerParams {
+    #[arg(short, long, required = false)]
+    bayer: u32,
 }
 
 fn is_power_of_two(value: u32) -> bool {
@@ -38,30 +47,29 @@ fn is_power_of_two(value: u32) -> bool {
 
 const BAYER2: [u32; 4] = [0, 2, 3, 1];
 
+fn save_preview(pattern: &Pattern, filename: &String) {
+    let mut img = ImageBuffer::new(pattern.width, pattern.height);
+    for (x, y, pixel) in img.enumerate_pixels_mut() {
+        let color = (256.0 * pattern.get(x, y) as f64 / (pattern.levels - 1) as f64).min(255.0) as u8;
+        *pixel = image::Luma([color]);
+    }
+    img.save_with_format(filename, ImageFormat::Png).unwrap();
+}
+
 fn main() -> Result<()> {
     let args = CliArgs::parse();
-
-    if args.pat_type.bayer {
+    if let Some(BayerParams { bayer: size }) = args.bayer_params {
         // Bayer pattern
 
-        if args.width != args.height {
-            println!("Pattern must be square.");
-            return Ok(());
-        }
-
-        if args.width < 2 {
+        if size < 2 {
             println!("Size must be at least 2");
             return Ok(());
         }
 
-        if !is_power_of_two(args.width) {
+        if !is_power_of_two(size) {
             println!("Size must be power of two.");
             return Ok(());
         }
-
-        let size = args.width;
-        let order = size.ilog2();
-        println!("order {}", order);
 
         let mut pattern = Pattern::new(size, size, size * size);
 
@@ -92,19 +100,18 @@ fn main() -> Result<()> {
             }
         }
 
-        for y in 0..args.height {
-            for x in 0..args.width {
-                print!("{:3} ", pattern.get(x, y));
-            }
-            println!();
-        }
-    } else if let Some(levels) = args.pat_type.levels {
-        // Blue noise pattern
-        let points = generate_points(args.width, args.height);
+        pattern.save(args.output)?;
 
-        let divisor = points.len() as f64 / levels as f64;
-        let mut statistic = vec![0u32; levels as usize];
-        let mut pattern = Pattern::new(args.width, args.height, levels);
+        if let Some(filename) = args.preview {
+            save_preview(&pattern, &filename);
+        }
+    } else if let Some(params) = args.noise_params {
+        // Blue noise pattern
+        let points = generate_points(params.width, params.height);
+
+        let divisor = points.len() as f64 / params.levels as f64;
+        let mut statistic = vec![0u32; params.levels as usize];
+        let mut pattern = Pattern::new(params.width, params.height, params.levels);
 
         for (i, point) in points.iter().enumerate() {
             let level = (i as f64 / divisor).floor() as u32;
@@ -112,19 +119,11 @@ fn main() -> Result<()> {
             statistic[level as usize] += 1;
         }
 
-        println!("{:?}", statistic);
-
         pattern.save(args.output)?;
 
         if let Some(filename) = args.preview {
-            let mut img = ImageBuffer::new(args.width, args.height);
-            for (x, y, pixel) in img.enumerate_pixels_mut() {
-                let color = (255.0 * pattern.get(x, y) as f64 / levels as f64) as u8;
-                *pixel = image::Luma([color]);
-            }
-            img.save_with_format(filename, ImageFormat::Png).unwrap();
+            save_preview(&pattern, &filename);
         }
     }
-
     Ok(())
 }

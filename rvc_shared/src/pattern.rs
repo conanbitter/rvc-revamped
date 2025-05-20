@@ -4,9 +4,9 @@ use std::fs;
 
 #[derive(Decode, Encode)]
 pub struct Pattern {
-    width: u32,
-    height: u32,
-    levels: u32,
+    pub width: u32,
+    pub height: u32,
+    pub levels: u32,
     data: Vec<u32>,
 }
 
