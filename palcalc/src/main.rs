@@ -2,13 +2,13 @@ use anyhow::Result;
 use clap::Parser;
 use colorcalc::{ColorCalc, ColorData};
 use image::ImageReader;
-use interface::{StatusLoading, Tui};
+use interface::StatusLoading;
 use std::path::PathBuf;
 
+use rvc_shared::interface::Tui;
+
 mod colorcalc;
-mod colors;
 mod interface;
-mod palette;
 
 #[derive(Parser, Debug)]
 struct Args {

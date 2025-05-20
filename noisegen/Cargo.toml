@@ -9,3 +9,4 @@ bincode = "2.0.1"
 clap = { version = "4.5.38", features = ["derive"] }
 image = { version = "0.25.6", default-features = false, features = ["png"] }
 rand = "0.9.1"
+rvc_shared = { path = "../rvc_shared" }

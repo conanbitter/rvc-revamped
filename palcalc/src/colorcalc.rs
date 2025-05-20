@@ -5,11 +5,10 @@ use image::RgbImage;
 use rand::Rng;
 use rayon::prelude::*;
 
-use crate::{
-    colors::{FloatColor, IntColor},
-    interface::{StatusCalculating, Tui},
-    palette::Palette,
-};
+use crate::interface::StatusCalculating;
+use rvc_shared::colors::{FloatColor, IntColor};
+use rvc_shared::interface::Tui;
+use rvc_shared::palette::Palette;
 
 pub struct ColorData(Vec<Vec<Vec<u64>>>);
 

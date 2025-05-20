@@ -2,10 +2,9 @@ use anyhow::Result;
 use bluenoise::generate_points;
 use clap::Parser;
 use image::{ImageBuffer, ImageFormat};
-use pattern::Pattern;
+use rvc_shared::pattern::Pattern;
 
 mod bluenoise;
-mod pattern;
 
 #[derive(Parser, Debug)]
 #[clap(disable_help_flag = true)]
