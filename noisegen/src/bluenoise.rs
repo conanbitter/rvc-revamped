@@ -3,12 +3,13 @@ use rand::Rng;
 const SIGMA: f64 = 1.5;
 const DIVISOR: f64 = SIGMA * SIGMA * 2.0;
 
-#[derive(Clone, Copy)]
-struct Point {
-    x: u32,
-    y: u32,
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct Point {
+    pub x: u32,
+    pub y: u32,
 }
 
+#[derive(Clone)]
 struct FloatImage {
     width: u32,
     height: u32,
@@ -58,8 +59,11 @@ fn apply_point(x: u32, y: u32, add: bool, image: &mut FloatImage, mask: &mut Flo
     for yp in 0..mask.height {
         let ylut = if yp < y { mask.height + yp - y } else { yp - y };
         for xp in 0..mask.width {
-            let xlut = if xp < x { mask.width + xp - y } else { xp - x };
-            mask.set(xp, yp, mask.get(xp, yp) + lut.get(xlut, ylut) * sign)
+            let xlut = if xp < x { mask.width + xp - x } else { xp - x };
+            if xlut >= mask.width || ylut >= mask.height {
+                println!("error");
+            }
+            mask.set(xp, yp, mask.get(xp, yp) + lut.get(xlut, ylut) * sign);
         }
     }
 }
@@ -114,13 +118,57 @@ fn find_cluster(image: &FloatImage, mask: &FloatImage) -> Point {
     cluster_point
 }
 
-fn generate_bluenoise_points(width: u32, height: u32) -> Vec<Point> {
+pub fn generate_points(width: u32, height: u32) -> Vec<Point> {
     let mut res = FloatImage::new(width, height);
     let mut energy_mask = FloatImage::new(width, height);
     let lut = generate_lut(width, height);
 
     let first_points_count = start_fill(&mut res, &mut energy_mask, &lut, 0.1);
-    let points = vec![Point { x: 0, y: 0 }; first_points_count as usize];
+    let mut points = vec![Point { x: 0, y: 0 }; first_points_count as usize];
+
+    println!("Step 1");
+    loop {
+        let cluster = find_cluster(&res, &energy_mask);
+        apply_point(cluster.x, cluster.y, false, &mut res, &mut energy_mask, &lut);
+        let void = find_void(&res, &energy_mask);
+        apply_point(void.x, void.y, true, &mut res, &mut energy_mask, &lut);
+        if cluster == void {
+            break;
+        }
+    }
+
+    println!("Step 2");
+    let mut step2temp = res.clone();
+    let mut step2mask = energy_mask.clone();
+
+    for i in (0..first_points_count as usize).rev() {
+        let cluster = find_cluster(&step2temp, &step2mask);
+        points[i] = cluster;
+        apply_point(cluster.x, cluster.y, false, &mut step2temp, &mut step2mask, &lut);
+    }
+
+    println!("Step 3");
+    for _ in first_points_count..width * height / 2 {
+        let void = find_void(&res, &energy_mask);
+        points.push(void);
+        apply_point(void.x, void.y, true, &mut res, &mut energy_mask, &lut);
+    }
+
+    println!("Step 4");
+    let mut negative = FloatImage::new(width, height);
+    let mut neg_energy = FloatImage::new(width, height);
+    for y in 0..negative.height {
+        for x in 0..negative.width {
+            if res.get(x, y) < 0.5 {
+                apply_point(x, y, true, &mut negative, &mut neg_energy, &lut);
+            }
+        }
+    }
+    for _ in width * height / 2..width * height {
+        let cluster = find_cluster(&negative, &neg_energy);
+        points.push(cluster);
+        apply_point(cluster.x, cluster.y, false, &mut negative, &mut neg_energy, &lut)
+    }
 
     points
 }
