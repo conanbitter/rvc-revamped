@@ -10,32 +10,35 @@ pub struct Point {
 }
 
 #[derive(Clone)]
-struct FloatImage {
+struct Plane<T> {
     width: u32,
     height: u32,
-    data: Vec<f64>,
+    data: Vec<T>,
 }
 
-impl FloatImage {
-    fn new(width: u32, height: u32) -> FloatImage {
-        FloatImage {
+impl<T> Plane<T>
+where
+    T: Clone + Copy,
+{
+    fn new(width: u32, height: u32, init: T) -> Plane<T> {
+        Plane {
             width,
             height,
-            data: vec![0.0; (width * height) as usize],
+            data: vec![init; (width * height) as usize],
         }
     }
 
-    fn set(&mut self, x: u32, y: u32, value: f64) {
+    fn set(&mut self, x: u32, y: u32, value: T) {
         self.data[(x + y * self.width) as usize] = value;
     }
 
-    fn get(&self, x: u32, y: u32) -> f64 {
+    fn get(&self, x: u32, y: u32) -> T {
         self.data[(x + y * self.width) as usize]
     }
 }
 
-fn generate_lut(width: u32, height: u32) -> FloatImage {
-    let mut res = FloatImage::new(width, height);
+fn generate_lut(width: u32, height: u32) -> Plane<f64> {
+    let mut res = Plane::new(width, height, 0.0);
     for y in 0..height {
         for x in 0..width {
             let xd = if x < width / 2 { x } else { width - x };
@@ -47,14 +50,9 @@ fn generate_lut(width: u32, height: u32) -> FloatImage {
     res
 }
 
-fn apply_point(x: u32, y: u32, add: bool, image: &mut FloatImage, mask: &mut FloatImage, lut: &FloatImage) {
-    let sign = if add {
-        image.set(x, y, 1.0);
-        1.0
-    } else {
-        image.set(x, y, 0.0);
-        -1.0
-    };
+fn apply_point(x: u32, y: u32, add: bool, image: &mut Plane<bool>, mask: &mut Plane<f64>, lut: &Plane<f64>) {
+    image.set(x, y, add);
+    let sign = if add { 1.0 } else { -1.0 };
 
     for yp in 0..mask.height {
         let ylut = if yp < y { mask.height + yp - y } else { yp - y };
@@ -68,7 +66,7 @@ fn apply_point(x: u32, y: u32, add: bool, image: &mut FloatImage, mask: &mut Flo
     }
 }
 
-fn start_fill(image: &mut FloatImage, mask: &mut FloatImage, lut: &FloatImage, quantity: f64) -> u32 {
+fn start_fill(image: &mut Plane<bool>, mask: &mut Plane<f64>, lut: &Plane<f64>, quantity: f64) -> u32 {
     // Jittered grid method
     let cols = ((image.width as f64) * quantity) as u32;
     let cell_width = image.width / cols;
@@ -86,13 +84,13 @@ fn start_fill(image: &mut FloatImage, mask: &mut FloatImage, lut: &FloatImage, q
     cols * rows
 }
 
-fn find_void(image: &FloatImage, mask: &FloatImage) -> Point {
+fn find_void(image: &Plane<bool>, mask: &Plane<f64>) -> Point {
     let mut void_point = Point { x: 0, y: 0 };
     let mut min_energy = f64::MAX;
     for y in 0..image.height {
         for x in 0..image.width {
             let energy = mask.get(x, y);
-            if image.get(x, y) < 0.5 && energy < min_energy {
+            if !image.get(x, y) && energy < min_energy {
                 min_energy = energy;
                 void_point.x = x;
                 void_point.y = y;
@@ -102,13 +100,13 @@ fn find_void(image: &FloatImage, mask: &FloatImage) -> Point {
     void_point
 }
 
-fn find_cluster(image: &FloatImage, mask: &FloatImage) -> Point {
+fn find_cluster(image: &Plane<bool>, mask: &Plane<f64>) -> Point {
     let mut cluster_point = Point { x: 0, y: 0 };
     let mut max_energy = f64::MIN;
     for y in 0..image.height {
         for x in 0..image.width {
             let energy = mask.get(x, y);
-            if image.get(x, y) > 0.5 && energy > max_energy {
+            if image.get(x, y) && energy > max_energy {
                 max_energy = energy;
                 cluster_point.x = x;
                 cluster_point.y = y;
@@ -119,8 +117,8 @@ fn find_cluster(image: &FloatImage, mask: &FloatImage) -> Point {
 }
 
 pub fn generate_points(width: u32, height: u32) -> Vec<Point> {
-    let mut res = FloatImage::new(width, height);
-    let mut energy_mask = FloatImage::new(width, height);
+    let mut res = Plane::new(width, height, false);
+    let mut energy_mask = Plane::new(width, height, 0.0);
     let lut = generate_lut(width, height);
 
     let first_points_count = start_fill(&mut res, &mut energy_mask, &lut, 0.1);
@@ -155,11 +153,11 @@ pub fn generate_points(width: u32, height: u32) -> Vec<Point> {
     }
 
     println!("Step 4");
-    let mut negative = FloatImage::new(width, height);
-    let mut neg_energy = FloatImage::new(width, height);
+    let mut negative = Plane::new(width, height, false);
+    let mut neg_energy = Plane::new(width, height, 0.0);
     for y in 0..negative.height {
         for x in 0..negative.width {
-            if res.get(x, y) < 0.5 {
+            if !res.get(x, y) {
                 apply_point(x, y, true, &mut negative, &mut neg_energy, &lut);
             }
         }
