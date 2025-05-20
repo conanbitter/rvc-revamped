@@ -24,7 +24,7 @@ impl Pattern {
         self.data[(x + y * self.width) as usize] = level;
     }
 
-    pub fn get(&mut self, x: u32, y: u32) -> u32 {
+    pub fn get(&self, x: u32, y: u32) -> u32 {
         self.data[(x + y * self.width) as usize]
     }
 
