@@ -1,5 +1,3 @@
-use std::cmp::min;
-
 use anyhow::Result;
 use bluenoise::generate_points;
 use clap::{Args, Parser};
