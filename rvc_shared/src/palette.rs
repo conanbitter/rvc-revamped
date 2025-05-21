@@ -1,22 +1,24 @@
-use std::{fs, i32, path::PathBuf};
-
-use crate::colors::IntColor;
-use anyhow::{Ok, Result};
+use crate::colors::RGBColor;
+use anyhow::Result;
 use bincode::{Decode, Encode};
+use std::{fs, path::PathBuf};
 
 #[derive(Clone, Debug, PartialEq, Decode, Encode)]
-pub struct Palette(Vec<IntColor>);
+pub struct Palette<T>(Vec<T>);
 
-impl Palette {
-    pub fn new() -> Palette {
+impl<T> Palette<T>
+where
+    T: RGBColor + Copy + Clone + Encode + bincode::Decode<()>,
+{
+    pub fn new() -> Palette<T> {
         Palette(Vec::with_capacity(256))
     }
 
-    pub fn add(&mut self, color: IntColor) {
+    pub fn add(&mut self, color: T) {
         self.0.push(color);
     }
 
-    pub fn get(&self, index: i32) -> IntColor {
+    pub fn get(&self, index: i32) -> T {
         self.0[index as usize]
     }
 
@@ -31,22 +33,42 @@ impl Palette {
         Ok(())
     }
 
-    pub fn from_file(filename: PathBuf) -> Result<Palette> {
+    pub fn from_file(filename: PathBuf) -> Result<Palette<T>> {
         let mut file = fs::File::open(filename)?;
         let config = bincode::config::standard();
         Ok(bincode::decode_from_std_read(&mut file, config)?)
     }
 
-    pub fn find(&self, color: IntColor) -> i32 {
+    pub fn find(&self, color: T) -> i32 {
         let mut best_index = 0;
-        let mut best_distance = i32::MAX;
+        let mut best_distance = f64::MAX;
         for (i, palcol) in self.0.iter().enumerate() {
-            let distance = color.distance_squared(*palcol);
+            let distance = color.distance2(palcol);
             if distance < best_distance {
                 best_distance = distance;
                 best_index = i;
             }
         }
         best_index as i32
+    }
+
+    pub fn from<P>(other: &Palette<P>) -> Palette<T>
+    where
+        P: Into<T> + Clone + Copy,
+    {
+        let mut result = Palette::<T>::new();
+        for color in other.0.iter() {
+            result.0.push(P::into(*color));
+        }
+        result
+    }
+}
+
+impl<T> Default for Palette<T>
+where
+    T: RGBColor + Copy + Clone + Encode + bincode::Decode<()>,
+{
+    fn default() -> Self {
+        Palette::new()
     }
 }

@@ -2,7 +2,11 @@ use anyhow::Result;
 use clap::Parser;
 use image::{ImageBuffer, ImageFormat, ImageReader};
 use indexig::convert_posterize;
-use rvc_shared::{colors::IntColor, palette::Palette, plane::Plane};
+use rvc_shared::{
+    colors::{FloatColor, IntColor},
+    palette::Palette,
+    plane::Plane,
+};
 use std::path::PathBuf;
 
 mod indexig;
@@ -17,7 +21,7 @@ fn load_image(filename: &PathBuf, image: &mut Plane<IntColor>) -> Result<()> {
     Ok(())
 }
 
-fn save_image(filename: &PathBuf, image: &Plane<i32>, palette: &Palette) -> Result<()> {
+fn save_image(filename: &PathBuf, image: &Plane<i32>, palette: &Palette<IntColor>) -> Result<()> {
     let mut file = ImageBuffer::new(image.width, image.height);
     for (file_pixel, img_pixel) in file.pixels_mut().zip(image.data.iter()) {
         let c = palette.get(*img_pixel);
@@ -41,6 +45,7 @@ fn main() -> Result<()> {
     let args = Args::parse_from(wild::args());
 
     let pal = Palette::from_file(args.palette)?;
+    let pal2: Palette<FloatColor> = Palette::from(&pal);
 
     for file in args.files {
         println!("{:?}", file);
