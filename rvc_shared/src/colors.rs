@@ -72,6 +72,14 @@ impl IntColor {
         0.299 * self.r as f64 + 0.587 * self.g as f64 + 0.114 * self.b as f64
     }
 
+    pub fn distance_squared(&self, other: IntColor) -> i32 {
+        let dr = self.r - other.r;
+        let dg = self.g - other.g;
+        let db = self.b - other.b;
+
+        dr * dr + dg * dg + db * db
+    }
+
     pub const BLACK: IntColor = IntColor { r: 0, g: 0, b: 0 };
 }
 

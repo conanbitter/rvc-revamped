@@ -1,0 +1,1 @@
+cargo run -p preview -- -p testdata\tex64.pal -o testdata\res testdata\tex*.png
