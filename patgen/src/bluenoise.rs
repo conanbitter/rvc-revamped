@@ -1,4 +1,5 @@
 use rand::Rng;
+use rvc_shared::plane::Plane;
 
 const SIGMA: f64 = 1.5;
 const DIVISOR: f64 = SIGMA * SIGMA * 2.0;
@@ -7,34 +8,6 @@ const DIVISOR: f64 = SIGMA * SIGMA * 2.0;
 pub struct Point {
     pub x: u32,
     pub y: u32,
-}
-
-#[derive(Clone)]
-struct Plane<T> {
-    width: u32,
-    height: u32,
-    data: Vec<T>,
-}
-
-impl<T> Plane<T>
-where
-    T: Clone + Copy,
-{
-    fn new(width: u32, height: u32, init: T) -> Plane<T> {
-        Plane {
-            width,
-            height,
-            data: vec![init; (width * height) as usize],
-        }
-    }
-
-    fn set(&mut self, x: u32, y: u32, value: T) {
-        self.data[(x + y * self.width) as usize] = value;
-    }
-
-    fn get(&self, x: u32, y: u32) -> T {
-        self.data[(x + y * self.width) as usize]
-    }
 }
 
 fn generate_lut(width: u32, height: u32) -> Plane<f64> {
