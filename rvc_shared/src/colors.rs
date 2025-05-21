@@ -1,5 +1,5 @@
 use bincode::{Decode, Encode};
-use std::cmp::min;
+use std::{cmp::min, ops};
 
 #[derive(Debug, Clone, Copy)]
 pub struct FloatColor {
@@ -33,6 +33,12 @@ impl FloatColor {
         }
     }
 
+    pub fn clip(&mut self) {
+        self.r = self.r.clamp(0.0, 1.0);
+        self.g = self.g.clamp(0.0, 1.0);
+        self.b = self.b.clamp(0.0, 1.0);
+    }
+
     pub const BLACK: FloatColor = FloatColor { r: 0.0, g: 0.0, b: 0.0 };
 }
 
@@ -52,6 +58,42 @@ impl From<&IntColor> for FloatColor {
             r: (color.r as f64) / 255.0,
             g: (color.g as f64) / 255.0,
             b: (color.b as f64) / 255.0,
+        }
+    }
+}
+
+impl ops::Add<FloatColor> for FloatColor {
+    type Output = FloatColor;
+
+    fn add(self, rhs: FloatColor) -> Self::Output {
+        FloatColor {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+        }
+    }
+}
+
+impl ops::Sub<FloatColor> for FloatColor {
+    type Output = FloatColor;
+
+    fn sub(self, rhs: FloatColor) -> Self::Output {
+        FloatColor {
+            r: self.r - rhs.r,
+            g: self.g - rhs.g,
+            b: self.b - rhs.b,
+        }
+    }
+}
+
+impl ops::Mul<f64> for FloatColor {
+    type Output = FloatColor;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        FloatColor {
+            r: self.r * rhs,
+            g: self.g * rhs,
+            b: self.b * rhs,
         }
     }
 }
