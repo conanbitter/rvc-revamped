@@ -37,10 +37,12 @@ impl FloatColor {
         0.299 * self.r + 0.587 * self.g + 0.114 * self.b
     }
 
-    pub fn clip(&mut self) {
-        self.r = self.r.clamp(0.0, 1.0);
-        self.g = self.g.clamp(0.0, 1.0);
-        self.b = self.b.clamp(0.0, 1.0);
+    pub fn clip(&self) -> FloatColor {
+        FloatColor {
+            r: self.r.clamp(0.0, 1.0),
+            g: self.g.clamp(0.0, 1.0),
+            b: self.b.clamp(0.0, 1.0),
+        }
     }
 
     pub const BLACK: FloatColor = FloatColor { r: 0.0, g: 0.0, b: 0.0 };
@@ -74,6 +76,18 @@ impl ops::Add<FloatColor> for FloatColor {
             r: self.r + rhs.r,
             g: self.g + rhs.g,
             b: self.b + rhs.b,
+        }
+    }
+}
+
+impl ops::Add<f64> for FloatColor {
+    type Output = FloatColor;
+
+    fn add(self, rhs: f64) -> Self::Output {
+        FloatColor {
+            r: self.r + rhs,
+            g: self.g + rhs,
+            b: self.b + rhs,
         }
     }
 }

@@ -1,11 +1,11 @@
 use anyhow::Result;
 use clap::Parser;
 use image::{ImageBuffer, ImageFormat, ImageReader};
-use indexig::convert_posterize;
+use indexing::{convert_fs, convert_posterize};
 use rvc_shared::{colors::IntColor, palette::Palette, plane::Plane};
 use std::path::PathBuf;
 
-mod indexig;
+mod indexing;
 
 fn load_image(filename: &PathBuf, image: &mut Plane<IntColor>) -> Result<()> {
     let file = ImageReader::open(filename)?.decode()?.to_rgb8();
@@ -20,7 +20,7 @@ fn load_image(filename: &PathBuf, image: &mut Plane<IntColor>) -> Result<()> {
 fn save_image(filename: &PathBuf, image: &Plane<i32>, palette: &Palette) -> Result<()> {
     let mut file = ImageBuffer::new(image.width, image.height);
     for (file_pixel, img_pixel) in file.pixels_mut().zip(image.data.iter()) {
-        let c = palette.get(*img_pixel);
+        let c = IntColor::from(palette.get(*img_pixel));
         *file_pixel = image::Rgb([c.r as u8, c.g as u8, c.b as u8]);
     }
     file.save_with_format(filename, ImageFormat::Png)?;
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
         let mut img = Plane::new(width, height, IntColor::BLACK);
         load_image(&file, &mut img)?;
         let mut out = Plane::new(width, height, 0i32);
-        convert_posterize(&img, &mut out, &pal);
+        convert_fs(&img, &mut out, &pal);
 
         let mut outfile = file.clone();
         outfile.set_extension("png");
