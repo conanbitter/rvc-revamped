@@ -1,1 +1,1 @@
-cargo run -p palcalc -r -- -o testdata\test.pal testdata\*.png
+cargo run -p palcalc -r -- -o testdata\tex64.pal -c 64 testdata\*.png

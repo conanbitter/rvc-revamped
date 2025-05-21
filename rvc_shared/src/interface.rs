@@ -136,7 +136,7 @@ impl Timer {
     }
 
     pub fn get_remaining(&self) -> String {
-        if self.step == 0 {
+        if self.step == 0 || self.step > self.total {
             return duration_format(Duration::ZERO);
         }
         let t = self.total as f64;
