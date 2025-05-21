@@ -228,7 +228,7 @@ impl ColorCalc {
     fn generate_palette(&self) -> Palette {
         let mut result = Palette::new();
         for cent in &self.centroids {
-            result.add(IntColor::from(cent));
+            result.add(*cent);
         }
         result
     }

@@ -33,6 +33,10 @@ impl FloatColor {
         }
     }
 
+    pub fn luminocity(&self) -> f64 {
+        0.299 * self.r + 0.587 * self.g + 0.114 * self.b
+    }
+
     pub fn clip(&mut self) {
         self.r = self.r.clamp(0.0, 1.0);
         self.g = self.g.clamp(0.0, 1.0);
