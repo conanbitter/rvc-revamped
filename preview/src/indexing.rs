@@ -1,8 +1,8 @@
 use rayon::prelude::*;
 use rvc_shared::{
     colors::{FloatColor, IntColor},
+    dmatrix::DitherMatrix,
     palette::Palette,
-    pattern::Pattern,
     plane::Plane,
 };
 
@@ -44,7 +44,12 @@ pub fn convert_fs(in_image: &Plane<IntColor>, out_image: &mut Plane<i32>, palett
 
 const DITHER_TRESHOLD: f64 = 0.5;
 
-pub fn convert_matrix(in_image: &Plane<IntColor>, out_image: &mut Plane<i32>, palette: &Palette, matrix: &Pattern) {
+pub fn convert_matrix(
+    in_image: &Plane<IntColor>,
+    out_image: &mut Plane<i32>,
+    palette: &Palette,
+    matrix: &DitherMatrix,
+) {
     out_image.data.par_iter_mut().enumerate().for_each(|(i, pixel)| {
         let x = i as u32 % out_image.width;
         let y = i as u32 / out_image.width;

@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use image::{ImageBuffer, ImageFormat, ImageReader};
 use indexing::{convert_fs, convert_matrix, convert_posterize};
-use rvc_shared::{colors::IntColor, palette::Palette, pattern::Pattern, plane::Plane};
+use rvc_shared::{colors::IntColor, dmatrix::DitherMatrix, palette::Palette, plane::Plane};
 use std::{path::PathBuf, time::Instant};
 
 mod indexing;
@@ -41,7 +41,7 @@ fn main() -> Result<()> {
     let args = Args::parse_from(wild::args());
 
     let pal = Palette::from_file(args.palette)?;
-    let pat = Pattern::from_file(String::from("testdata\\noise480x270x16.ptrn"))?;
+    let pat = DitherMatrix::from_file(String::from("testdata\\noise480x270x16.ptrn"))?;
 
     let now = Instant::now();
     for file in args.files {

@@ -3,16 +3,16 @@ use bincode::{Decode, Encode};
 use std::fs;
 
 #[derive(Decode, Encode)]
-pub struct Pattern {
+pub struct DitherMatrix {
     pub width: u32,
     pub height: u32,
     pub levels: u32,
     data: Vec<u32>,
 }
 
-impl Pattern {
-    pub fn new(width: u32, height: u32, levels: u32) -> Pattern {
-        Pattern {
+impl DitherMatrix {
+    pub fn new(width: u32, height: u32, levels: u32) -> DitherMatrix {
+        DitherMatrix {
             width,
             height,
             levels,
@@ -35,7 +35,7 @@ impl Pattern {
         Ok(())
     }
 
-    pub fn from_file(filename: String) -> Result<Pattern> {
+    pub fn from_file(filename: String) -> Result<DitherMatrix> {
         let mut file = fs::File::open(filename)?;
         let config = bincode::config::standard();
         Ok(bincode::decode_from_std_read(&mut file, config)?)

@@ -1,5 +1,5 @@
 pub mod colors;
+pub mod dmatrix;
 pub mod interface;
 pub mod palette;
-pub mod pattern;
 pub mod plane;

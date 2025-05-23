@@ -2,7 +2,7 @@ use anyhow::Result;
 use bluenoise::generate_points;
 use clap::{Args, Parser};
 use image::{ImageBuffer, ImageFormat};
-use rvc_shared::pattern::Pattern;
+use rvc_shared::dmatrix::DitherMatrix;
 
 mod bluenoise;
 
@@ -45,7 +45,7 @@ fn is_power_of_two(value: u32) -> bool {
 
 const BAYER2: [u32; 4] = [0, 2, 3, 1];
 
-fn save_preview(pattern: &Pattern, filename: &String) {
+fn save_preview(pattern: &DitherMatrix, filename: &String) {
     let mut img = ImageBuffer::new(pattern.width, pattern.height);
     for (x, y, pixel) in img.enumerate_pixels_mut() {
         let color = (256.0 * pattern.get(x, y) as f64 / (pattern.levels - 1) as f64).min(255.0) as u8;
@@ -69,7 +69,7 @@ fn main() -> Result<()> {
             return Ok(());
         }
 
-        let mut pattern = Pattern::new(size, size, size * size);
+        let mut pattern = DitherMatrix::new(size, size, size * size);
 
         let mut block_size = 2;
         loop {
@@ -109,7 +109,7 @@ fn main() -> Result<()> {
 
         let divisor = points.len() as f64 / params.levels as f64;
         let mut statistic = vec![0u32; params.levels as usize];
-        let mut pattern = Pattern::new(params.width, params.height, params.levels);
+        let mut pattern = DitherMatrix::new(params.width, params.height, params.levels);
 
         for (i, point) in points.iter().enumerate() {
             let level = (i as f64 / divisor).floor() as u32;
