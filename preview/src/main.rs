@@ -1,9 +1,9 @@
 use anyhow::Result;
 use clap::Parser;
 use image::{ImageBuffer, ImageFormat, ImageReader};
-use indexing::{convert_fs, convert_posterize};
-use rvc_shared::{colors::IntColor, palette::Palette, plane::Plane};
-use std::path::PathBuf;
+use indexing::{convert_fs, convert_matrix, convert_posterize};
+use rvc_shared::{colors::IntColor, palette::Palette, pattern::Pattern, plane::Plane};
+use std::{path::PathBuf, time::Instant};
 
 mod indexing;
 
@@ -41,7 +41,9 @@ fn main() -> Result<()> {
     let args = Args::parse_from(wild::args());
 
     let pal = Palette::from_file(args.palette)?;
+    let pat = Pattern::from_file(String::from("testdata\\noise480x270x16.ptrn"))?;
 
+    let now = Instant::now();
     for file in args.files {
         println!("{:?}", file);
         let (width, height) = ImageReader::open(&file)?.into_dimensions()?;
@@ -49,7 +51,7 @@ fn main() -> Result<()> {
         let mut img = Plane::new(width, height, IntColor::BLACK);
         load_image(&file, &mut img)?;
         let mut out = Plane::new(width, height, 0i32);
-        convert_fs(&img, &mut out, &pal);
+        convert_matrix(&img, &mut out, &pal, &pat);
 
         let mut outfile = file.clone();
         outfile.set_extension("png");
@@ -58,5 +60,7 @@ fn main() -> Result<()> {
             save_image(&outfile, &out, &pal)?;
         }
     }
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
     Ok(())
 }

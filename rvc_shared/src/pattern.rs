@@ -25,7 +25,7 @@ impl Pattern {
     }
 
     pub fn get(&self, x: u32, y: u32) -> u32 {
-        self.data[(x + y * self.width) as usize]
+        self.data[((x % self.width) + (y % self.height) * self.width) as usize]
     }
 
     pub fn save(&self, filename: String) -> Result<()> {
@@ -33,5 +33,11 @@ impl Pattern {
         let config = bincode::config::standard();
         bincode::encode_into_std_write(self, &mut file, config)?;
         Ok(())
+    }
+
+    pub fn from_file(filename: String) -> Result<Pattern> {
+        let mut file = fs::File::open(filename)?;
+        let config = bincode::config::standard();
+        Ok(bincode::decode_from_std_read(&mut file, config)?)
     }
 }

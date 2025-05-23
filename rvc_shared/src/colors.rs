@@ -116,6 +116,14 @@ impl ops::Mul<f64> for FloatColor {
     }
 }
 
+impl ops::AddAssign<FloatColor> for FloatColor {
+    fn add_assign(&mut self, rhs: FloatColor) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Decode, Encode)]
 pub struct IntColor {
     pub r: i32,

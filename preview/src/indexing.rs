@@ -1,6 +1,8 @@
+use rayon::prelude::*;
 use rvc_shared::{
     colors::{FloatColor, IntColor},
     palette::Palette,
+    pattern::Pattern,
     plane::Plane,
 };
 
@@ -38,4 +40,26 @@ pub fn convert_fs(in_image: &Plane<IntColor>, out_image: &mut Plane<i32>, palett
             }
         }
     }
+}
+
+const DITHER_TRESHOLD: f64 = 0.5;
+
+pub fn convert_matrix(in_image: &Plane<IntColor>, out_image: &mut Plane<i32>, palette: &Palette, matrix: &Pattern) {
+    out_image.data.par_iter_mut().enumerate().for_each(|(i, pixel)| {
+        let x = i as u32 % out_image.width;
+        let y = i as u32 / out_image.width;
+        let mut candidates = vec![0i32; matrix.levels as usize];
+        let mut color_error = FloatColor::BLACK;
+
+        let in_color = FloatColor::from(in_image.get(x, y));
+        for cand in candidates.iter_mut() {
+            let attempt = (in_color + color_error * DITHER_TRESHOLD).clip();
+            let index = palette.find(attempt);
+            *cand = index;
+            let new_color = palette.get(index);
+            color_error += in_color - new_color;
+        }
+        candidates.sort();
+        *pixel = candidates[matrix.get(x, y) as usize];
+    });
 }
