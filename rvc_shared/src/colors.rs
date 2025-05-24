@@ -45,6 +45,19 @@ impl FloatColor {
         }
     }
 
+    pub fn difference(&self, other: &FloatColor) -> f64 {
+        let diff_r = self.r - other.r;
+        let diff_g = self.g - other.g;
+        let diff_b = self.g - other.g;
+        let diffcolor = FloatColor {
+            r: diff_r * diff_r,
+            g: diff_g * diff_g,
+            b: diff_b * diff_b,
+        };
+        let diffluma = self.luminocity() - other.luminocity();
+        diffcolor.luminocity() * 0.75 + diffluma * diffluma
+    }
+
     pub const BLACK: FloatColor = FloatColor { r: 0.0, g: 0.0, b: 0.0 };
 }
 

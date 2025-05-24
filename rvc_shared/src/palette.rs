@@ -51,11 +51,11 @@ impl Palette {
 
     pub fn find(&self, color: FloatColor) -> i32 {
         let mut best_index = 0;
-        let mut best_distance = f64::MAX;
+        let mut best_difference = f64::MAX;
         for (i, palcol) in self.0.iter().enumerate() {
-            let distance = color.distance_squared(*palcol);
-            if distance < best_distance {
-                best_distance = distance;
+            let difference = color.difference(palcol);
+            if difference < best_difference {
+                best_difference = difference;
                 best_index = i;
             }
         }
